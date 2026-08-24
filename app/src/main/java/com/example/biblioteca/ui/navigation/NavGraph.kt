@@ -6,59 +6,90 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.biblioteca.ui.screen.confirm_reserva.ConfirmReservaScreen
-import com.example.biblioteca.ui.screen.detalle_libro.DetalleLibroScreen
-import com.example.biblioteca.ui.screen.inicio.InicioScreen
-import com.example.biblioteca.ui.screen.lista_libro.ListaLibroScreen
+import com.example.biblioteca.ui.screen.mis_reservas.MisReservasScreen
+import com.example.biblioteca.ui.screen.detalle_reserva.DetalleReservaScreen
+import com.example.biblioteca.ui.screen.renovar_reserva.RenovarReservaScreen
+import com.example.biblioteca.ui.screen.renovacion_exitosa.RenovacionExitosaScreen
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 @Composable
 fun NavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Inicio.route
+        startDestination = Screen.MisReservas.route
     ) {
-        composable(Screen.Inicio.route) {
-            InicioScreen(
-                onNavigateToLista = {
-                    navController.navigate(Screen.ListaLibro.route)
+        // Mis Reservas Flow
+        composable(Screen.MisReservas.route) {
+            MisReservasScreen(
+                onNavigateToDetalle = { nombre, autor, fecha, codigo ->
+                    navController.navigate(Screen.DetalleReserva.createRoute(nombre, autor, fecha, codigo))
                 }
             )
         }
-        composable(Screen.ListaLibro.route) {
-            ListaLibroScreen(
-                onBack = {
-                    navController.popBackStack()
-                },
-                onNavigateToDetalle = { bookId ->
-                    navController.navigate(Screen.DetalleLibro.createRoute(bookId))
-                }
-            )
-        }
+
         composable(
-            route = Screen.DetalleLibro.route,
-            arguments = listOf(navArgument("bookId") { type = NavType.StringType })
+            route = Screen.DetalleReserva.route,
+            arguments = listOf(
+                navArgument("nombreLibro") { type = NavType.StringType },
+                navArgument("autor") { type = NavType.StringType },
+                navArgument("fechaReserva") { type = NavType.StringType },
+                navArgument("codigoReserva") { type = NavType.StringType }
+            )
         ) { backStackEntry ->
-            val bookId = backStackEntry.arguments?.getString("bookId") ?: ""
-            DetalleLibroScreen(
-                bookId = bookId,
-                onBack = {
-                    navController.popBackStack()
-                },
-                onNavigateToConfirm = { id ->
-                    navController.navigate(Screen.ConfirmReserva.createRoute(id))
+            val nombre = URLDecoder.decode(backStackEntry.arguments?.getString("nombreLibro") ?: "", StandardCharsets.UTF_8.toString())
+            val autor = URLDecoder.decode(backStackEntry.arguments?.getString("autor") ?: "", StandardCharsets.UTF_8.toString())
+            val fecha = URLDecoder.decode(backStackEntry.arguments?.getString("fechaReserva") ?: "", StandardCharsets.UTF_8.toString())
+            val codigo = URLDecoder.decode(backStackEntry.arguments?.getString("codigoReserva") ?: "", StandardCharsets.UTF_8.toString())
+            
+            DetalleReservaScreen(
+                nombreLibro = nombre,
+                autor = autor,
+                fechaReserva = fecha,
+                codigoReserva = codigo,
+                onBack = { navController.popBackStack() },
+                onNavigateToRenovar = { n, f ->
+                    navController.navigate(Screen.RenovarReserva.createRoute(n, f))
                 }
             )
         }
+
         composable(
-            route = Screen.ConfirmReserva.route,
-            arguments = listOf(navArgument("bookId") { type = NavType.StringType })
+            route = Screen.RenovarReserva.route,
+            arguments = listOf(
+                navArgument("nombreLibro") { type = NavType.StringType },
+                navArgument("fechaReserva") { type = NavType.StringType }
+            )
         ) { backStackEntry ->
-            val bookId = backStackEntry.arguments?.getString("bookId") ?: ""
-            ConfirmReservaScreen(
-                bookId = bookId,
-                onNavigateToInicio = {
-                    navController.navigate(Screen.Inicio.route) {
-                        popUpTo(Screen.Inicio.route) { inclusive = true }
+            val nombre = URLDecoder.decode(backStackEntry.arguments?.getString("nombreLibro") ?: "", StandardCharsets.UTF_8.toString())
+            val fecha = URLDecoder.decode(backStackEntry.arguments?.getString("fechaReserva") ?: "", StandardCharsets.UTF_8.toString())
+            
+            RenovarReservaScreen(
+                nombreLibro = nombre,
+                fechaReserva = fecha,
+                onBack = { navController.popBackStack() },
+                onNavigateToExito = { n, fn ->
+                    navController.navigate(Screen.RenovacionExitosa.createRoute(n, fn))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.RenovacionExitosa.route,
+            arguments = listOf(
+                navArgument("nombreLibro") { type = NavType.StringType },
+                navArgument("fechaNueva") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val nombre = URLDecoder.decode(backStackEntry.arguments?.getString("nombreLibro") ?: "", StandardCharsets.UTF_8.toString())
+            val fecha = URLDecoder.decode(backStackEntry.arguments?.getString("fechaNueva") ?: "", StandardCharsets.UTF_8.toString())
+            
+            RenovacionExitosaScreen(
+                nombreLibro = nombre,
+                fechaNueva = fecha,
+                onNavigateToMisReservas = {
+                    navController.navigate(Screen.MisReservas.route) {
+                        popUpTo(Screen.MisReservas.route) { inclusive = true }
                     }
                 }
             )
